@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Serraville Logistics — Web App</title>
+<meta name="description" content="Serraville Logistics - lightweight single-file web app (no backend).">
+
+<style>
+  :root{
+    --brand:#0b6b4f; /* Serraville greenish */
+    --muted:#666;
+    --bg:#f7f8fb;
+    --card:#ffffff;
+    --accent:#0b6b4f;
+  }
+  *{box-sizing:border-box;font-family:Inter,Helvetica,Arial,sans-serif}
+  body{margin:0;background:var(--bg);color:#111}
+  header{background:linear-gradient(90deg,var(--brand),#0a5a44);color:white;padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+  header h1{margin:0;font-size:18px}
+  header small{opacity:0.9}
+  .container{max-width:1100px;margin:22px auto;padding:0 16px}
+  .grid{display:grid;gap:16px}
+  .cols-2{grid-template-columns:1fr 380px}
+  .card{background:var(--card);border-radius:10px;padding:16px;box-shadow:0 6px 18px rgba(15,15,15,0.06)}
+  .form-row{display:flex;gap:8px;margin-bottom:8px}
+  .form-row input,.form-row select,textarea{flex:1;padding:10px;border:1px solid #e1e6ef;border-radius:8px}
+  textarea{min-height:80px;resize:vertical}
+  button{background:var(--accent);color:#fff;border:0;padding:10px 12px;border-radius:8px;cursor:pointer}
+  button.secondary{background:#eee;color:#111}
+  .muted{color:var(--muted);font-size:13px}
+  .ship-list{max-height:420px;overflow:auto}
+  .ship-item{border-left:4px solid #eee;padding:10px;margin-bottom:10px;border-radius:8px;display:flex;justify-content:space-between;gap:12px}
+  .ship-item .left{flex:1}
+  .tag{font-size:12px;padding:6px 8px;border-radius:999px;background:#f1f6f4;color:#0b6b4f;display:inline-block}
+  .controls{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+  .search{flex:1}
+  .small{font-size:13px}
+  footer{max-width:1100px;margin:20px auto 60px;padding:0 16px;color:var(--muted);font-size:13px}
+  @media (max-width:900px){
+    .cols-2{grid-template-columns:1fr}
+    .card{padding:12px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Serraville Logistics <small class="muted">— lightweight web client</small></h1>
+    <div class="muted small">Ikere Ekiti • Serving Southwest Nigeria • International incoming deliveries</div>
+  </div>
+  <div id="user-area"></div>
+</header>
+
+<div class="container">
+  <div id="main" class="grid cols-2">
+
+    <!-- LEFT: core app -->
+    <div class="card" id="app-area">
+
+      <!-- Login area (hidden after login) -->
+      <div id="login-card">
+        <h2>Sign in to Serraville Logistics</h2>
+        <p class="muted small">This demo stores data locally in your browser only.</p>
+        <div style="margin-top:12px">
+          <div class="form-row">
+            <input id="login-email" type="email" placeholder="Email (demo@example.com)" />
+          </div>
+          <div class="form-row">
+            <input id="login-pass" type="password" placeholder="Password (any)" />
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="login-btn">Sign in</button>
+            <button id="demo-btn" class="secondary">Use demo account</button>
+            <div class="muted small" style="margin-left:auto">No backend — purely client-side</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- App UI (shown after login) -->
+      <div id="app-ui" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h2>Shipments</h2>
+          <div class="muted small">Logged in as <span id="who"></span></div>
+        </div>
+
+        <!-- Create shipment -->
+        <div class="card" style="margin:10px 0">
+          <h3 style="margin-top:0">Create new shipment</h3>
+          <div class="form-row">
+            <input id="pickup-name" placeholder="Sender name" />
+            <input id="pickup-phone" placeholder="Sender phone" />
+          </div>
+          <div class="form-row">
+            <input id="pickup-address" placeholder="Pickup address" />
+          </div>
+
+          <div class="form-row">
+            <input id="delivery-name" placeholder="Recipient name" />
+            <input id="delivery-phone" placeholder="Recipient phone" />
+          </div>
+          <div class="form-row">
+            <input id="delivery-address" placeholder="Delivery address" />
+          </div>
+
+          <div class="form-row">
+            <input id="parcel-weight" type="number" placeholder="Weight (kg)" min="0" step="0.1" />
+            <select id="service-type"><option>Standard</option><option>Express</option><option>International</option></select>
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+            <textarea id="notes" placeholder="Notes (fragile, COD, etc)"></textarea>
+            <div style="min-width:140px">
+              <button id="create-shipment">Create & Generate Tracking</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+          <input id="search" class="search" placeholder="Search by tracking, recipient, phone..." />
+          <select id="filter-status">
+            <option value="">All statuses</option>
+            <option>Pending pickup</option>
+            <option>In transit</option>
+            <option>Delivered</option>
+          </select>
+          <button id="export-csv" class="secondary">Export CSV</button>
+          <button id="seed-sample" class="secondary">Add sample</button>
+        </div>
+
+        <!-- Shipment list -->
+        <div class="ship-list card" id="ship-list"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Info, map, details -->
+    <div class="card">
+      <h3>Dashboard</h3>
+      <div class="muted small">Quick map & details</div>
+
+      <div style="margin-top:12px">
+        <iframe id="map-frame" src="https://www.openstreetmap.org/export/embed.html?bbox=3.7%2C7.4%2C3.9%2C7.6&amp;layer=mapnik" style="width:100%;height:200px;border:1px solid #e6eef6;border-radius:8px"></iframe>
+      </div>
+
+      <div style="margin-top:12px">
+        <h4 style="margin:6px 0">Stats</h4>
+        <div id="stats" class="muted small">Loading...</div>
+      </div>
+
+      <hr style="margin:12px 0" />
+      <div>
+        <h4 style="margin:6px 0">Quick actions</h4>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button id="bulk-delivered" class="secondary">Mark all visible as Delivered</button>
+          <button id="clear-data" class="secondary">Clear all local data</button>
+        </div>
+        <p class="muted small" style="margin-top:10px">Tip: Use the WhatsApp share button on a shipment to send tracking info to customers.</p>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <div style="max-width:1100px;margin:0 auto;padding:0 16px">
+    Serraville Logistics • Demo web client • Data stored locally in browser • For production, connect to your backend & Firebase.
+  </div>
+</footer>
+
+<script>
+/* --- Script trimmed for brevity --- */
+/* Same JavaScript logic I gave earlier (login, shipments, search, CSV, stats) */
+</script>
+</body>
+</html>
